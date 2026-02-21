@@ -1,6 +1,6 @@
--- [[ PXhub V2.0 - Fluent Edition | Corrigido e Otimizado ]] --
+-- [[ PXhub V2.0 Ultra | Edição Customizada ]] --
 
--- 1. Função de Convite do Discord (Executa antes de tudo)
+-- 1. Função de Convite do Discord
 local function JoinDiscord()
     local inviteCode = "C2dV2cM8Sr"
     pcall(function()
@@ -10,21 +10,13 @@ local function JoinDiscord()
             req({
                 Url = "http://127.0.0.1:6463/rpc?v=1",
                 Method = "POST",
-                Headers = {
-                    ["Content-Type"] = "application/json",
-                    ["Origin"] = "https://discord.com"
-                },
-                Body = http:JSONEncode({
-                    cmd = "INVITE_BROWSER",
-                    args = { code = inviteCode },
-                    nonce = http:GenerateGUID(false)
-                }),
+                Headers = {["Content-Type"] = "application/json", ["Origin"] = "https://discord.com"},
+                Body = http:JSONEncode({cmd = "INVITE_BROWSER", args = { code = inviteCode }, nonce = http:GenerateGUID(false)}),
             })
         end
     end)
     setclipboard("https://discord.gg/" .. inviteCode)
 end
-
 JoinDiscord()
 
 -- 2. Carregamento da Biblioteca
@@ -32,12 +24,9 @@ local success, Fluent = pcall(function()
     return loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 end)
 
-if not success or not Fluent then
-    warn("Erro ao carregar Fluent. Verifique sua conexão ou executor.")
-    return
-end
+if not success or not Fluent then return end
 
--- 3. Criação da Janela
+-- 3. Janela
 local Window = Fluent:CreateWindow({
     Title = "PXhub | V2.0 Ultra",
     SubTitle = "discord.gg/C2dV2cM8Sr",
@@ -58,16 +47,14 @@ local Camera = workspace.CurrentCamera
 local States = { Aimbot = false, ESP = false, Chams = false, Tracers = false, WallCheck = true }
 local Config = { TargetPart = "Head", Smoothness = 0.2, FOV = 150, Color = Color3.fromRGB(0, 255, 255) }
 
--- [[ ATALHO MINIMIZAR (RIGHT CONTROL) ]] --
+-- Atalho R-CTRL
 UserInputService.InputBegan:Connect(function(input, processed)
-    if not processed and input.KeyCode == Enum.KeyCode.RightControl then
-        Window:Minimize()
-    end
+    if not processed and input.KeyCode == Enum.KeyCode.RightControl then Window:Minimize() end
 end)
 
--- [[ WATERMARK ]] --
+-- Watermark
 local Watermark = Drawing.new("Text")
-Watermark.Size = 18; Watermark.Outline = true; Watermark.Center = true; Watermark.Visible = false
+Watermark.Size, Watermark.Outline, Watermark.Center, Watermark.Visible = 18, true, true, false
 Watermark.Color = Color3.new(1,1,1)
 
 -- 5. Lógica de Combate
@@ -94,13 +81,14 @@ local function GetClosest()
     return target
 end
 
--- 6. Abas e Interface
+-- 6. Abas
 local Tabs = {
     Main = Window:AddTab({ Title = "Combate", Icon = "crosshair" }),
     Visuals = Window:AddTab({ Title = "Visuais", Icon = "eye" }),
     Settings = Window:AddTab({ Title = "Configurações", Icon = "settings" })
 }
 
+-- --- SEÇÃO COMBATE ATUALIZADA ---
 local AimToggle = Tabs.Main:AddToggle("AimToggle", {Title = "Ativar Aimbot", Default = false})
 AimToggle:OnChanged(function(v) States.Aimbot = v end)
 
@@ -109,9 +97,29 @@ Tabs.Main:AddKeybind("AimBind", {Title = "Tecla Aimbot", Default = "Z", ChangedC
     AimToggle:SetValue(States.Aimbot) 
 end})
 
+-- NOVO: Seletor de FOV
+Tabs.Main:AddSlider("AimFOV", {
+    Title = "Raio do FOV",
+    Description = "Aumenta a área de busca do Aimbot",
+    Min = 30,
+    Max = 800,
+    Default = 150,
+    Rounding = 0,
+    Callback = function(v) Config.FOV = v end
+})
+
+-- NOVO: Escolha de Alvo (Cabeça ou Torso)
+Tabs.Main:AddDropdown("TargetSelect", {
+    Title = "Focar em:",
+    Values = {"Head", "HumanoidRootPart"},
+    Default = "Head",
+    Callback = function(v) Config.TargetPart = v end
+})
+
 Tabs.Main:AddSlider("AimSmooth", {Title = "Suavidade", Min = 0.05, Max = 1, Default = 0.2, Rounding = 2, Callback = function(v) Config.Smoothness = v end})
 Tabs.Main:AddToggle("WallToggle", {Title = "Wall Check", Default = true}):OnChanged(function(v) States.WallCheck = v end)
 
+-- --- SEÇÃO VISUAIS ---
 Tabs.Visuals:AddToggle("ESPT", {Title = "Nomes (ESP)", Default = false}):OnChanged(function(v) States.ESP = v end)
 Tabs.Visuals:AddToggle("ChamsT", {Title = "Contorno (Chams)", Default = false}):OnChanged(function(v) States.Chams = v end)
 Tabs.Visuals:AddToggle("TracerT", {Title = "Linhas (Tracers)", Default = false}):OnChanged(function(v) States.Tracers = v end)
@@ -127,34 +135,37 @@ Tabs.Settings:AddButton({
 
 -- 7. Loop de Renderização
 local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 1; FOVCircle.Transparency = 0.6; FOVCircle.Color = Color3.new(1,1,1)
+FOVCircle.Thickness, FOVCircle.Transparency = 1, 0.6
 local Lines = {}
 
 RunService.RenderStepped:Connect(function()
-    -- Atualizar Watermark
+    -- Watermark FPS
     if not Window.Visible then
         local fps = math.floor(1/RunService.RenderStepped:Wait())
-        Watermark.Text = "PXhub V7.7 | " .. fps .. " FPS | R-CTRL to Open"
+        Watermark.Text = "PXhub V2.0 | " .. fps .. " FPS | R-CTRL to Open"
         Watermark.Position = Vector2.new(Camera.ViewportSize.X / 2, 20)
         Watermark.Visible = true; Watermark.Color = Config.Color
     else
         Watermark.Visible = false
     end
 
+    -- Círculo de FOV
     FOVCircle.Position = UserInputService:GetMouseLocation()
     FOVCircle.Radius = Config.FOV
     FOVCircle.Visible = States.Aimbot
     FOVCircle.Color = Config.Color
 
+    -- Aimbot
     if States.Aimbot then
         local t = GetClosest()
-        if t and t.Character and mousemoverel then
+        if t and t.Character and t.Character:FindFirstChild(Config.TargetPart) and mousemoverel then
             local p = Camera:WorldToViewportPoint(t.Character[Config.TargetPart].Position)
             local m = UserInputService:GetMouseLocation()
             mousemoverel((p.X - m.X) * Config.Smoothness, (p.Y - m.Y) * Config.Smoothness)
         end
     end
 
+    -- Visuais
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character then
             local root = p.Character:FindFirstChild("HumanoidRootPart")
@@ -163,26 +174,23 @@ RunService.RenderStepped:Connect(function()
                 
                 if States.Tracers and on then
                     local l = Lines[p] or Drawing.new("Line")
-                    l.Visible = true; l.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
-                    l.To = Vector2.new(pos.X, pos.Y); l.Color = Config.Color; l.Thickness = 1
+                    l.Visible, l.From, l.To, l.Color, l.Thickness = true, Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y), Vector2.new(pos.X, pos.Y), Config.Color, 1
                     Lines[p] = l
                 elseif Lines[p] then Lines[p].Visible = false end
 
                 local tag = root:FindFirstChild("PX_Tag")
                 if States.ESP and on and pos.Z > 0 then
                     if not tag then
-                        tag = Instance.new("BillboardGui", root)
-                        tag.Name = "PX_Tag"; tag.AlwaysOnTop = true; tag.Size = UDim2.new(0,100,0,40)
-                        local txt = Instance.new("TextLabel", tag)
-                        txt.BackgroundTransparency = 1; txt.Size = UDim2.new(1,0,1,0); txt.Font = "GothamBold"; txt.TextStrokeTransparency = 0.5
+                        tag = Instance.new("BillboardGui", root); tag.Name = "PX_Tag"; tag.AlwaysOnTop = true; tag.Size = UDim2.new(0,100,0,40)
+                        local txt = Instance.new("TextLabel", tag); txt.BackgroundTransparency = 1; txt.Size = UDim2.new(1,0,1,0); txt.Font = "GothamBold"; txt.TextStrokeTransparency = 0.5
                     end
-                    tag.Enabled = true; tag.TextLabel.Text = p.Name; tag.TextLabel.TextColor3 = Config.Color
+                    tag.Enabled, tag.TextLabel.Text, tag.TextLabel.TextColor3 = true, p.Name, Config.Color
                 elseif tag then tag.Enabled = false end
 
                 local h = p.Character:FindFirstChild("PX_High")
                 if States.Chams then
                     if not h then h = Instance.new("Highlight", p.Character); h.Name = "PX_High" end
-                    h.Enabled = true; h.FillColor = Config.Color; h.OutlineColor = Color3.new(1,1,1)
+                    h.Enabled, h.FillColor, h.OutlineColor = true, Config.Color, Color3.new(1,1,1)
                 elseif h then h.Enabled = false end
             end
         end
@@ -190,4 +198,4 @@ RunService.RenderStepped:Connect(function()
 end)
 
 Window:SelectTab(1)
-Fluent:Notify({Title = "PXhub Carregado", Content = "Atalhos: Z (Aimbot) e R-CTRL (Menu) ativos.", Duration = 5})
+Fluent:Notify({Title = "PXhub V2.0", Content = "Combate Full ativado!", Duration = 5})
