@@ -1,393 +1,171 @@
--- [[ PXhub V2.0 Ultra | Discord ]] --
+-- [[ PXhub V7.7 - Fluent Edition | Corrigido e Otimizado ]] --
 
-
-
--- 1. FUNÇÃO DISCORD (Método Universal)
-
+-- 1. Função de Convite do Discord (Executa antes de tudo)
 local function JoinDiscord()
-
-    local inviteLink = "https://discord.gg/C2dV2cM8Sr"
-
-    
-
-    -- Tenta copiar para o teclado (funciona em 99% dos executores)
-
-    if setclipboard then
-
-        setclipboard(inviteLink)
-
-    end
-
-    
-
-    -- Tenta abrir o navegador (se o executor permitir via RPC)
-
+    local inviteCode = "C2dV2cM8Sr"
     pcall(function()
-
+        local http = game:GetService("HttpService")
         local req = (syn and syn.request) or (http and http.request) or http_request or request
-
         if req then
-
             req({
-
                 Url = "http://127.0.0.1:6463/rpc?v=1",
-
                 Method = "POST",
-
-                Headers = {["Content-Type"] = "application/json", ["Origin"] = "https://discord.com"},
-
-                Body = game:GetService("HttpService"):JSONEncode({
-
+                Headers = {
+                    ["Content-Type"] = "application/json",
+                    ["Origin"] = "https://discord.com"
+                },
+                Body = http:JSONEncode({
                     cmd = "INVITE_BROWSER",
-
-                    args = {code = "C2dV2cM8Sr"},
-
-                    nonce = game:GetService("HttpService"):GenerateGUID(false)
-
-                })
-
+                    args = { code = inviteCode },
+                    nonce = http:GenerateGUID(false)
+                }),
             })
-
         end
-
     end)
-
+    setclipboard("https://discord.gg/" .. inviteCode)
 end
-
-
 
 JoinDiscord()
 
-
-
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-
-
-
-local Window = Fluent:CreateWindow({
-
-    Title = "PXhub | V2.0 Ultra",
-
-    SubTitle = "discord.gg/C2dV2cM8Sr",
-
-    TabWidth = 160,
-
-    Size = UDim2.fromOffset(580, 460),
-
-    Acrylic = false, 
-
-    Theme = "Dark",
-
-    MinimizeKey = Enum.KeyCode.Insert
-
-})
-
-
-
-local RunService = game:GetService("RunService")
-
-local Players = game:GetService("Players")
-
-local UserInputService = game:GetService("UserInputService")
-
-local Stats = game:GetService("Stats")
-
-local LocalPlayer = Players.LocalPlayer
-
-local Camera = workspace.CurrentCamera
-
-
-
-local States = { Aimbot = false, ESP = false, Chams = false, Tracers = false, WallCheck = true }
-
-local Config = { TargetPart = "Head", Smoothness = 0.2, FOV = 150, Color = Color3.fromRGB(0, 255, 255) }
-
-
-
--- [[ ATALHO CONTROL DIREITO ]] --
-
-UserInputService.InputBegan:Connect(function(input, processed)
-
-    if not processed and input.KeyCode == Enum.KeyCode.RightControl then
-
-        Window:Minimize()
-
-    end
-
+-- 2. Carregamento da Biblioteca
+local success, Fluent = pcall(function()
+    return loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 end)
 
-
-
--- [[ WATERMARK ]] --
-
-local Watermark = Drawing.new("Text")
-
-Watermark.Size = 18; Watermark.Outline = true; Watermark.Center = true; Watermark.Visible = false
-
-Watermark.Color = Color3.new(1,1,1); Watermark.Position = Vector2.new(Camera.ViewportSize.X / 2, 20)
-
-
-
--- [[ LÓGICA DE VISIBILIDADE ]] --
-
-local function IsVisible(part)
-
-    if not States.WallCheck then return true end
-
-    local params = RaycastParams.new()
-
-    params.FilterType = Enum.RaycastFilterType.Exclude
-
-    params.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
-
-    local res = workspace:Raycast(Camera.CFrame.Position, (part.Position - Camera.CFrame.Position), params)
-
-    return not res or res.Instance:IsDescendantOf(part.Parent)
-
+if not success or not Fluent then
+    warn("Erro ao carregar Fluent. Verifique sua conexão ou executor.")
+    return
 end
 
+-- 3. Criação da Janela
+local Window = Fluent:CreateWindow({
+    Title = "PXhub | V7.7 Ultra",
+    SubTitle = "discord.gg/C2dV2cM8Sr",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false, 
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.Insert
+})
 
+-- 4. Variáveis e Estados
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
--- [[ ABAS ]] --
+local States = { Aimbot = false, ESP = false, Chams = false, Tracers = false, WallCheck = true }
+local Config = { TargetPart = "Head", Smoothness = 0.2, FOV = 150, Color = Color3.fromRGB(0, 255, 255) }
 
+-- 5. Lógica de Combate
+local function IsVisible(part)
+    if not States.WallCheck then return true end
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
+    local res = workspace:Raycast(Camera.CFrame.Position, (part.Position - Camera.CFrame.Position), params)
+    return not res or res.Instance:IsDescendantOf(part.Parent)
+end
+
+local function GetClosest()
+    local target, dist = nil, Config.FOV
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(Config.TargetPart) then
+            local p, on = Camera:WorldToViewportPoint(v.Character[Config.TargetPart].Position)
+            if on and p.Z > 0 and IsVisible(v.Character[Config.TargetPart]) then
+                local mag = (Vector2.new(p.X, p.Y) - UserInputService:GetMouseLocation()).Magnitude
+                if mag < dist then target, dist = v, mag end
+            end
+        end
+    end
+    return target
+end
+
+-- 6. Abas e Interface
 local Tabs = {
-
     Main = Window:AddTab({ Title = "Combate", Icon = "crosshair" }),
-
     Visuals = Window:AddTab({ Title = "Visuais", Icon = "eye" }),
-
     Settings = Window:AddTab({ Title = "Configurações", Icon = "settings" })
-
 }
 
-
-
--- ABA COMBATE
-
 local AimToggle = Tabs.Main:AddToggle("AimToggle", {Title = "Ativar Aimbot", Default = false})
-
 AimToggle:OnChanged(function(v) States.Aimbot = v end)
 
-
-
 Tabs.Main:AddKeybind("AimBind", {Title = "Tecla Aimbot", Default = "Z", ChangedCallback = function() 
-
     States.Aimbot = not States.Aimbot 
-
     AimToggle:SetValue(States.Aimbot) 
-
 end})
 
-
-
 Tabs.Main:AddSlider("AimSmooth", {Title = "Suavidade", Min = 0.05, Max = 1, Default = 0.2, Rounding = 2, Callback = function(v) Config.Smoothness = v end})
-
 Tabs.Main:AddToggle("WallToggle", {Title = "Wall Check", Default = true}):OnChanged(function(v) States.WallCheck = v end)
 
-
-
--- ABA VISUAIS
-
 Tabs.Visuals:AddToggle("ESPT", {Title = "Nomes (ESP)", Default = false}):OnChanged(function(v) States.ESP = v end)
-
 Tabs.Visuals:AddToggle("ChamsT", {Title = "Contorno (Chams)", Default = false}):OnChanged(function(v) States.Chams = v end)
-
 Tabs.Visuals:AddToggle("TracerT", {Title = "Linhas (Tracers)", Default = false}):OnChanged(function(v) States.Tracers = v end)
-
 Tabs.Visuals:AddColorpicker("ThemeColor", {Title = "Cor dos Hacks", Default = Config.Color}):OnChanged(function(v) Config.Color = v end)
 
-
-
--- ABA CONFIGURAÇÕES
-
-Tabs.Settings:AddDropdown("ThemeSelect", {
-
-    Title = "Tema da Interface",
-
-    Values = {"Dark", "Light", "Rose", "Aqua", "Amethyst"},
-
-    Default = "Dark",
-
-    Callback = function(v) pcall(function() Window:SetTheme(v) end) end
-
-})
-
-
-
 Tabs.Settings:AddButton({
-
     Title = "Copiar Discord",
-
     Callback = function()
-
         setclipboard("https://discord.gg/C2dV2cM8Sr")
-
-        Fluent:Notify({Title = "Discord", Content = "Link copiado para o seu teclado!", Duration = 3})
-
+        Fluent:Notify({Title = "Discord", Content = "Convite copiado!", Duration = 3})
     end
-
 })
 
-
-
--- [[ LOOP DE RENDERIZAÇÃO ]] --
-
+-- 7. Loop de Renderização
 local FOVCircle = Drawing.new("Circle")
-
 FOVCircle.Thickness = 1; FOVCircle.Transparency = 0.6; FOVCircle.Color = Color3.new(1,1,1)
-
 local Lines = {}
 
-
-
 RunService.RenderStepped:Connect(function()
-
-    if not Window.Visible then
-
-        local fps = math.floor(1/RunService.RenderStepped:Wait())
-
-        local ping = math.floor(Stats.Network.ServerTickTag:GetTimeSinceLastTick() * 1000)
-
-        Watermark.Text = "PXhub V7.7 | " .. fps .. " FPS | " .. ping .. "ms | R-CTRL to Open"
-
-        Watermark.Position = Vector2.new(Camera.ViewportSize.X / 2, 20)
-
-        Watermark.Visible = true; Watermark.Color = Config.Color
-
-    else
-
-        Watermark.Visible = false
-
-    end
-
-
-
     FOVCircle.Position = UserInputService:GetMouseLocation()
-
     FOVCircle.Radius = Config.FOV
-
     FOVCircle.Visible = States.Aimbot
-
     FOVCircle.Color = Config.Color
 
-
-
     if States.Aimbot then
-
-        local target, dist = nil, Config.FOV
-
-        for _, v in pairs(Players:GetPlayers()) do
-
-            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
-
-                local p, on = Camera:WorldToViewportPoint(v.Character.Head.Position)
-
-                if on and p.Z > 0 and IsVisible(v.Character.Head) then
-
-                    local mag = (Vector2.new(p.X, p.Y) - UserInputService:GetMouseLocation()).Magnitude
-
-                    if mag < dist then target = v; dist = mag end
-
-                end
-
-            end
-
-        end
-
-        if target and mousemoverel then
-
-            local p = Camera:WorldToViewportPoint(target.Character.Head.Position)
-
+        local t = GetClosest()
+        if t and t.Character and mousemoverel then
+            local p = Camera:WorldToViewportPoint(t.Character[Config.TargetPart].Position)
             local m = UserInputService:GetMouseLocation()
-
             mousemoverel((p.X - m.X) * Config.Smoothness, (p.Y - m.Y) * Config.Smoothness)
-
         end
-
     end
-
-
 
     for _, p in pairs(Players:GetPlayers()) do
-
         if p ~= LocalPlayer and p.Character then
-
             local root = p.Character:FindFirstChild("HumanoidRootPart")
-
             if root then
-
                 local pos, on = Camera:WorldToViewportPoint(root.Position)
-
                 
-
-                -- TRACERS
-
                 if States.Tracers and on then
-
                     local l = Lines[p] or Drawing.new("Line")
-
-                    l.Visible = true; l.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y); l.To = Vector2.new(pos.X, pos.Y); l.Color = Config.Color
-
+                    l.Visible = true; l.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+                    l.To = Vector2.new(pos.X, pos.Y); l.Color = Config.Color; l.Thickness = 1
                     Lines[p] = l
-
                 elseif Lines[p] then Lines[p].Visible = false end
 
-
-
-                -- ESP NOMES
-
                 local tag = root:FindFirstChild("PX_Tag")
-
                 if States.ESP and on and pos.Z > 0 then
-
                     if not tag then
-
                         tag = Instance.new("BillboardGui", root)
-
                         tag.Name = "PX_Tag"; tag.AlwaysOnTop = true; tag.Size = UDim2.new(0,100,0,40)
-
                         local txt = Instance.new("TextLabel", tag)
-
                         txt.BackgroundTransparency = 1; txt.Size = UDim2.new(1,0,1,0); txt.Font = "GothamBold"; txt.TextStrokeTransparency = 0.5
-
                     end
-
                     tag.Enabled = true; tag.TextLabel.Text = p.Name; tag.TextLabel.TextColor3 = Config.Color
-
                 elseif tag then tag.Enabled = false end
 
-
-
-                -- CHAMS
-
                 local h = p.Character:FindFirstChild("PX_High")
-
                 if States.Chams then
-
                     if not h then h = Instance.new("Highlight", p.Character); h.Name = "PX_High" end
-
                     h.Enabled = true; h.FillColor = Config.Color; h.OutlineColor = Color3.new(1,1,1)
-
                 elseif h then h.Enabled = false end
-
             end
-
         end
-
     end
-
 end)
 
-
-
 Window:SelectTab(1)
-
-Fluent:Notify({
-
-    Title = "PXhub V7.7 Ultra",
-
-    Content = "Discord COPIADO! Cole no seu navegador (discord.gg/C2dV2cM8Sr)",
-
-    Duration = 10
-
-})
+Fluent:Notify({Title = "PXhub Carregado", Content = "Atalhos: Z e X ativos.", Duration = 5})
