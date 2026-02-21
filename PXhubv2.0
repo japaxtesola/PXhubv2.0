@@ -1,4 +1,4 @@
--- [[ PXhub V7.7 - Fluent Edition | Corrigido e Otimizado ]] --
+-- [[ PXhub V2.0 - Fluent Edition | Corrigido e Otimizado ]] --
 
 -- 1. Função de Convite do Discord (Executa antes de tudo)
 local function JoinDiscord()
@@ -39,7 +39,7 @@ end
 
 -- 3. Criação da Janela
 local Window = Fluent:CreateWindow({
-    Title = "PXhub | V7.7 Ultra",
+    Title = "PXhub | V2.0 Ultra",
     SubTitle = "discord.gg/C2dV2cM8Sr",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
