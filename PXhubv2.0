@@ -58,6 +58,18 @@ local Camera = workspace.CurrentCamera
 local States = { Aimbot = false, ESP = false, Chams = false, Tracers = false, WallCheck = true }
 local Config = { TargetPart = "Head", Smoothness = 0.2, FOV = 150, Color = Color3.fromRGB(0, 255, 255) }
 
+-- [[ ATALHO MINIMIZAR (RIGHT CONTROL) ]] --
+UserInputService.InputBegan:Connect(function(input, processed)
+    if not processed and input.KeyCode == Enum.KeyCode.RightControl then
+        Window:Minimize()
+    end
+end)
+
+-- [[ WATERMARK ]] --
+local Watermark = Drawing.new("Text")
+Watermark.Size = 18; Watermark.Outline = true; Watermark.Center = true; Watermark.Visible = false
+Watermark.Color = Color3.new(1,1,1)
+
 -- 5. Lógica de Combate
 local function IsVisible(part)
     if not States.WallCheck then return true end
@@ -119,6 +131,16 @@ FOVCircle.Thickness = 1; FOVCircle.Transparency = 0.6; FOVCircle.Color = Color3.
 local Lines = {}
 
 RunService.RenderStepped:Connect(function()
+    -- Atualizar Watermark
+    if not Window.Visible then
+        local fps = math.floor(1/RunService.RenderStepped:Wait())
+        Watermark.Text = "PXhub V7.7 | " .. fps .. " FPS | R-CTRL to Open"
+        Watermark.Position = Vector2.new(Camera.ViewportSize.X / 2, 20)
+        Watermark.Visible = true; Watermark.Color = Config.Color
+    else
+        Watermark.Visible = false
+    end
+
     FOVCircle.Position = UserInputService:GetMouseLocation()
     FOVCircle.Radius = Config.FOV
     FOVCircle.Visible = States.Aimbot
@@ -168,4 +190,4 @@ RunService.RenderStepped:Connect(function()
 end)
 
 Window:SelectTab(1)
-Fluent:Notify({Title = "PXhub Carregado", Content = "Atalhos: Z e X ativos.", Duration = 5})
+Fluent:Notify({Title = "PXhub Carregado", Content = "Atalhos: Z (Aimbot) e R-CTRL (Menu) ativos.", Duration = 5})
